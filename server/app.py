@@ -17,11 +17,34 @@ db.init_app(app)
 api = Api(app)
 
 class Plants(Resource):
-    pass
+    def get(self):
+        # Implement GET /plants route
+        plants = Plant.query.all()
+        plants_list = [plant.to_dict() for plant in plants]
+        return make_response(jsonify(plants_list), 200)
+
+    def post(self):
+        # Implement POST /plants route
+        data = request.get_json()
+        if 'name' not in data or 'image' not in data or 'price' not in data:
+            return make_response(jsonify({"error": "Missing required fields"}), 400)
+
+        new_plant = Plant(name=data['name'], image=data['image'], price=data['price'])
+        db.session.add(new_plant)
+        db.session.commit()
+        return make_response(jsonify(new_plant.to_dict()), 201)
 
 class PlantByID(Resource):
-    pass
-        
+    def get(self, id):
+        # Implement GET /plants/:id route
+        plant = Plant.query.get(id)
+        if plant is None:
+            return make_response(jsonify({"error": "Plant not found"}), 404)
+        return make_response(jsonify(plant.to_dict()), 200)
+
+api.add_resource(Plants, '/plants')
+api.add_resource(PlantByID, '/plants/<int:id>')
 
 if __name__ == '__main__':
     app.run(port=5555, debug=True)
+
